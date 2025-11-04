@@ -10,11 +10,11 @@ export interface Skill {
   categoryEn: string; // 元の英語カテゴリ
   author: string;
   stars: number;
-  downloads?: number;
+  downloads?: number | null;
   updatedAt: string;
   tags: string[];
   githubUrl?: string;
-  installCommand?: string;
+  installCommand?: string | null;
 }
 
 export interface Category {
