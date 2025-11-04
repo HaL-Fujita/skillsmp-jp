@@ -7,19 +7,26 @@ GitHub APIを使ってClaudeスキルデータを収集するスクリプト
 
 必要な環境変数:
     GITHUB_TOKEN: GitHub Personal Access Token（オプション、レート制限を緩和）
+    OPENAI_API_KEY: OpenAI APIキー（オプション、高品質翻訳用）
+    TRANSLATION_METHOD: 翻訳方法 (googletrans/openai/none) デフォルト: googletrans
 """
 
 import json
 import os
 import sys
+import time
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import urllib.request
 import urllib.error
 
 # GitHub API設定
 GITHUB_API_BASE = "https://api.github.com"
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+
+# 翻訳設定
+TRANSLATION_METHOD = os.getenv("TRANSLATION_METHOD", "googletrans")  # googletrans, openai, none
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # カテゴリマッピング（英語→日本語）
 CATEGORY_MAP = {
@@ -112,6 +119,79 @@ def fetch_skill_md(repo_full_name: str, skill_path: str) -> Dict[str, Any]:
     return {}
 
 
+def translate_with_googletrans(text: str) -> Optional[str]:
+    """googletransライブラリを使って翻訳"""
+    try:
+        from googletrans import Translator
+        translator = Translator()
+        result = translator.translate(text, src='en', dest='ja')
+        time.sleep(0.5)  # レート制限対策
+        return result.text
+    except ImportError:
+        print("  Warning: googletrans not installed. Run: pip install googletrans==4.0.0-rc1")
+        return None
+    except Exception as e:
+        print(f"  Warning: Translation failed with googletrans: {e}")
+        return None
+
+
+def translate_with_openai(text: str) -> Optional[str]:
+    """OpenAI APIを使って翻訳"""
+    if not OPENAI_API_KEY:
+        print("  Warning: OPENAI_API_KEY not set")
+        return None
+
+    try:
+        import json
+
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
+        }
+
+        data = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": "あなたは技術文書の翻訳を専門とする翻訳者です。英語のテキストを自然な日本語に翻訳してください。"},
+                {"role": "user", "content": f"以下の英語テキストを日本語に翻訳してください：\n\n{text}"}
+            ],
+            "temperature": 0.3
+        }
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode('utf-8'),
+            headers=headers
+        )
+
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode())
+            translated = result['choices'][0]['message']['content'].strip()
+            time.sleep(0.5)  # レート制限対策
+            return translated
+
+    except Exception as e:
+        print(f"  Warning: Translation failed with OpenAI: {e}")
+        return None
+
+
+def translate_text(text: str, method: str = TRANSLATION_METHOD) -> str:
+    """テキストを指定された方法で翻訳"""
+    if not text or method == "none":
+        return text
+
+    translated = None
+
+    if method == "openai":
+        translated = translate_with_openai(text)
+    elif method == "googletrans":
+        translated = translate_with_googletrans(text)
+
+    # 翻訳失敗時は元のテキストを返す
+    return translated if translated else text
+
+
 def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any]) -> Dict[str, Any]:
     """スキルデータを作成"""
     # IDを生成
@@ -126,13 +206,26 @@ def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[st
     if skill_data.get("tags"):
         tags = [tag.strip() for tag in skill_data.get("tags", "").split(",")][:5]
 
+    # 英語データを取得
+    name_en = skill_data.get("name", skill_name)
+    description_en = skill_data.get("description", "")
+
+    # 日本語に翻訳
+    if TRANSLATION_METHOD != "none":
+        print(f"    Translating '{name_en}'...")
+        name_ja = translate_text(name_en)
+        description_ja = translate_text(description_en)
+    else:
+        name_ja = name_en
+        description_ja = description_en
+
     # スキルデータ
     skill = {
         "id": skill_id,
-        "name": skill_data.get("name", skill_name),
-        "nameEn": skill_data.get("name", skill_name),
-        "description": skill_data.get("description", ""),
-        "descriptionEn": skill_data.get("description", ""),
+        "name": name_ja,
+        "nameEn": name_en,
+        "description": description_ja,
+        "descriptionEn": description_en,
         "category": category_ja,
         "categoryEn": category_en,
         "author": repo["owner"]["login"],
@@ -149,8 +242,12 @@ def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[st
 
 def main():
     """メイン処理"""
-    print("Claude Skills Data Fetcher")
+    print("Claude Skills Data Fetcher with Auto-Translation")
     print("=" * 50)
+    print(f"Translation Method: {TRANSLATION_METHOD}")
+    if TRANSLATION_METHOD == "openai":
+        print(f"OpenAI API Key: {'Set' if OPENAI_API_KEY else 'Not Set'}")
+    print()
 
     # anthropics/skillsリポジトリを取得
     repo = get_anthropics_skills_repo()

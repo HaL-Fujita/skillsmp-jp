@@ -1,20 +1,18 @@
 [
   {
     "id": "anthropics-algorithmic-art",
-    "name": "アルゴリズミックアート",
+    "name": "アルゴリズムアート",
     "nameEn": "algorithmic-art",
-    "description": "p5.jsを使用してシード付きランダム性とインタラクティブなパラメータ探索でアルゴリズミックアートを作成します。コードを使ったアート制作、ジェネラティブアート、アルゴリズミックアート、フローフィールド、パーティクルシステムなどのリクエストに使用します。著作権侵害を避けるため、既存のアーティストの作品をコピーせず、オリジナルのアルゴリズミックアートを作成します。",
+    "description": "シードされたランダム性とインタラクティブなパラメーター探索を備えた p5.js を使用してアルゴリズム アートを作成します。ユーザーがコード、ジェネレーティブ アート、アルゴリズム アート、フロー フィールド、またはパーティクル システムを使用したアートの作成を要求する場合にこれを使用します。著作権侵害を避けるために、既存のアーティストの作品をコピーするのではなく、オリジナルのアルゴリズム アートを作成します。",
     "descriptionEn": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "p5.js",
-      "generative-art",
-      "art"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/algorithmic-art",
     "installCommand": null
@@ -23,18 +21,16 @@
     "id": "anthropics-artifacts-builder",
     "name": "アーティファクトビルダー",
     "nameEn": "artifacts-builder",
-    "description": "React、Tailwind CSS、shadcn/uiなどのモダンなフロントエンドWeb技術を使用して、複雑でマルチコンポーネントのclaude.ai HTMLアーティファクトを作成するためのツールスイートです。状態管理、ルーティング、shadcn/uiコンポーネントが必要な複雑なアーティファクトに使用します。シンプルな単一ファイルのHTML/JSXアーティファクトには使用しません。",
+    "description": "最新のフロントエンド Web テクノロジー (React、Tailwind CSS、shadcn/ui) を使用して、精巧なマルチコンポーネント claude.ai HTML アーティファクトを作成するためのツール スイート。単純な単一ファイルの HTML/JSX アーティファクトではなく、状態管理、ルーティング、または shadcn/ui コンポーネントを必要とする複雑なアーティファクトに使用します。",
     "descriptionEn": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "react",
-      "tailwind",
-      "shadcn-ui"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/artifacts-builder",
     "installCommand": null
@@ -43,17 +39,16 @@
     "id": "anthropics-brand-guidelines",
     "name": "ブランドガイドライン",
     "nameEn": "brand-guidelines",
-    "description": "Anthropicの公式ブランドカラーとタイポグラフィを、Anthropicのルック＆フィールが有益なあらゆる種類のアーティファクトに適用します。ブランドカラーやスタイルガイドライン、ビジュアルフォーマット、企業デザイン基準が適用される場合に使用します。",
+    "description": "Anthropic の公式ブランド カラーとタイポグラフィを、Anthropic のルック アンド フィールを持つことで恩恵を受ける可能性のあるあらゆる種類のアーティファクトに適用します。ブランドのカラーやスタイルのガイドライン、視覚的な書式設定、または会社のデザイン基準が適用される場合に使用します。",
     "descriptionEn": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "branding",
-      "design"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/brand-guidelines",
     "installCommand": null
@@ -62,114 +57,106 @@
     "id": "anthropics-canvas-design",
     "name": "キャンバスデザイン",
     "nameEn": "canvas-design",
-    "description": "デザイン哲学を使用して、.pngおよび.pdf文書で美しいビジュアルアートを作成します。ユーザーがポスター、アート作品、デザイン、その他の静的な作品の作成を依頼した場合に使用します。著作権侵害を避けるため、既存のアーティストの作品をコピーせず、オリジナルのビジュアルデザインを作成します。",
+    "description": "デザイン哲学を使用して、.png および .pdf ドキュメントで美しいビジュアル アートを作成します。ユーザーがポスター、アート作品、デザイン、その他の静的な作品の作成を要求した場合は、このスキルを使用する必要があります。著作権侵害を避けるために、既存のアーティストの作品を決してコピーせず、オリジナルのビジュアル デザインを作成してください。",
     "descriptionEn": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "design",
-      "art",
-      "canvas"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/canvas-design",
     "installCommand": null
   },
   {
     "id": "anthropics-internal-comms",
-    "name": "社内コミュニケーション",
+    "name": "内部通信",
     "nameEn": "internal-comms",
-    "description": "会社が好んで使用する形式を使用して、あらゆる種類の社内コミュニケーションを作成するのに役立つリソースセットです。ステータスレポート、リーダーシップ更新、3P更新、社内ニュースレター、FAQ、インシデントレポート、プロジェクト更新など、何らかの社内コミュニケーションを書くように依頼された場合はいつでもこのスキルを使用します。",
+    "description": "私の会社が好んで使用する形式を使用して、あらゆる種類の社内コミュニケーションを作成するのに役立つ一連のリソース。クロードは、何らかの社内コミュニケーション (ステータス レポート、リーダーシップの最新情報、サードパーティの最新情報、社内ニュースレター、FAQ、インシデント レポート、プロジェクトの最新情報など) を書くように求められたときは常に、このスキルを使用する必要があります。",
     "descriptionEn": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.).",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "communication",
-      "writing"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/internal-comms",
     "installCommand": null
   },
   {
     "id": "anthropics-mcp-builder",
-    "name": "MCPビルダー",
+    "name": "mcpビルダー",
     "nameEn": "mcp-builder",
-    "description": "LLMが適切に設計されたツールを通じて外部サービスと対話できるようにする高品質なMCP（Model Context Protocol）サーバーを作成するためのガイドです。Python（FastMCP）またはNode/TypeScript（MCP SDK）で外部APIやサービスを統合するMCPサーバーを構築する際に使用します。",
+    "description": "LLM が適切に設計されたツールを通じて外部サービスと対話できるようにする、高品質の MCP (モデル コンテキスト プロトコル) サーバーを作成するためのガイド。Python (FastMCP) または Node/TypeScript (MCP SDK) のいずれであれ、外部 API またはサービスを統合するための MCP サーバーを構築するときに使用します。",
     "descriptionEn": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "mcp",
-      "api",
-      "protocol"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/mcp-builder",
     "installCommand": null
   },
   {
     "id": "anthropics-skill-creator",
-    "name": "スキル作成ツール",
+    "name": "スキルクリエイター",
     "nameEn": "skill-creator",
-    "description": "効果的なスキルを作成するためのガイドです。ユーザーが新しいスキルを作成したい（または既存のスキルを更新したい）場合、専門知識、ワークフロー、ツール統合でClaudeの機能を拡張する際にこのスキルを使用します。",
+    "description": "効果的なスキルを作成するためのガイド。このスキルは、ユーザーが専門知識、ワークフロー、またはツール統合によってクロードの機能を拡張する新しいスキルを作成する (または既存のスキルを更新する) 場合に使用する必要があります。",
     "descriptionEn": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "skill",
-      "development"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/skill-creator",
     "installCommand": null
   },
   {
     "id": "anthropics-slack-gif-creator",
-    "name": "Slack GIF作成ツール",
+    "name": "スラックGIFクリエイター",
     "nameEn": "slack-gif-creator",
-    "description": "Slackに最適化されたアニメーションGIFを作成するためのツールキットで、サイズ制約のバリデーターと組み合わせ可能なアニメーションプリミティブを備えています。「XがYしているSlack用のGIFを作って」のような説明からアニメーションGIFや絵文字アニメーションをリクエストされた場合に適用されます。",
+    "description": "Slack 用に最適化されたアニメーション GIF を作成するためのツールキット。サイズ制約のバリデーターと合成可能なアニメーション プリミティブが含まれます。このスキルは、ユーザーが「Y をしている X の Slack 用の GIF を作成してください」などの説明から、Slack 用のアニメーション GIF または絵文字アニメーションをリクエストした場合に適用されます。",
     "descriptionEn": "Toolkit for creating animated GIFs optimized for Slack, with validators for size constraints and composable animation primitives. This skill applies when users request animated GIFs or emoji animations for Slack from descriptions like \"make me a GIF for Slack of X doing Y\".",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "slack",
-      "gif",
-      "animation"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/slack-gif-creator",
     "installCommand": null
   },
   {
     "id": "anthropics-template-skill",
-    "name": "テンプレートスキル",
+    "name": "テンプレスキル",
     "nameEn": "template-skill",
-    "description": "スキルの説明とClaudeがいつ使用すべきかの説明に置き換えてください。",
+    "description": "スキルの説明とクロードがそれを使用するタイミングに置き換えます。",
     "descriptionEn": "Replace with description of the skill and when Claude should use it.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "template"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/template-skill",
     "installCommand": null
@@ -178,38 +165,34 @@
     "id": "anthropics-theme-factory",
     "name": "テーマファクトリー",
     "nameEn": "theme-factory",
-    "description": "テーマを使用してアーティファクトをスタイリングするためのツールキットです。これらのアーティファクトは、スライド、ドキュメント、レポート、HTMLランディングページなどです。作成されたアーティファクトに適用できる10個のプリセットテーマ（色/フォント）があり、またはその場で新しいテーマを生成することもできます。",
+    "description": "テーマを使用してアーティファクトをスタイル設定するためのツールキット。これらの成果物には、スライド、ドキュメント、レポート、HTML ランディング ページなどがあります。作成中の成果物に適用したり、その場で新しいテーマを生成したりできる、色やフォントを備えた 10 個の事前設定されたテーマがあります。",
     "descriptionEn": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "theme",
-      "design",
-      "styling"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/theme-factory",
     "installCommand": null
   },
   {
     "id": "anthropics-webapp-testing",
-    "name": "Webアプリテスト",
+    "name": "ウェブアプリのテスト",
     "nameEn": "webapp-testing",
-    "description": "Playwrightを使用してローカルWebアプリケーションと対話およびテストするためのツールキットです。フロントエンド機能の検証、UIの動作デバッグ、ブラウザスクリーンショットのキャプチャ、ブラウザログの表示をサポートします。",
+    "description": "Playwright を使用してローカル Web アプリケーションを操作およびテストするためのツールキット。フロントエンド機能の検証、UI 動作のデバッグ、ブラウザーのスクリーンショットのキャプチャ、ブラウザー ログの表示をサポートします。",
     "descriptionEn": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15347,
+    "stars": 15351,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
-      "testing",
-      "playwright",
-      "qa"
+      "skill"
     ],
     "githubUrl": "https://github.com/anthropics/skills/tree/main/webapp-testing",
     "installCommand": null
