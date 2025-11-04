@@ -9,6 +9,7 @@ export default function Home() {
   const skillsData = skills as Skill[];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'stars' | 'updatedAt'>('stars');
 
   // カテゴリ一覧とカウントを取得
   const categories = useMemo(() => {
@@ -25,7 +26,7 @@ export default function Home() {
     }));
   }, [skillsData]);
 
-  // 検索とカテゴリフィルタリング
+  // 検索、カテゴリフィルタリング、ソート
   const filteredSkills = useMemo(() => {
     let filtered = skillsData;
 
@@ -48,25 +49,74 @@ export default function Home() {
       );
     }
 
-    return filtered;
-  }, [searchQuery, selectedCategory, skillsData]);
+    // ソート
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'stars') {
+        return b.stars - a.stars;
+      } else {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      }
+    });
+
+    return sorted;
+  }, [searchQuery, selectedCategory, sortBy, skillsData]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Claude Codeスキルマーケットプレイス 🇯🇵
-          </h1>
-          <p className="text-gray-600 mt-2">
-            高品質なClaudeスキルとプラグインを発見・共有
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Claude Codeスキルマーケットプレイス 🇯🇵
+              </h1>
+            </Link>
+          </div>
         </div>
       </header>
 
+      {/* ヒーローセクション */}
+      <section className="bg-gradient-to-b from-blue-50 to-white py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            すべてのスキルを指先に
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            コミュニティが構築した{skillsData.length}個の無料AIプラグイン、ツール、ワークフローを閲覧
+          </p>
+        </div>
+      </section>
+
+      {/* カテゴリ別ブラウズセクション */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          カテゴリ別に閲覧
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {categories.map((category) => (
+            <button
+              key={category.name}
+              onClick={() => {
+                setSelectedCategory(category.name);
+                // スキル一覧までスクロール
+                document.getElementById('skills-list')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-6 text-left border border-gray-200 hover:border-blue-500"
+            >
+              <h4 className="text-lg font-bold text-gray-900 mb-2">
+                {category.name}
+              </h4>
+              <p className="text-gray-600 text-sm">
+                {category.count}個のスキル
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* メインコンテンツ */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="skills-list" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 scroll-mt-20">
         {/* 検索窓 */}
         <div className="mb-6">
           <div className="relative">
@@ -93,35 +143,52 @@ export default function Home() {
           </div>
         </div>
 
-        {/* カテゴリフィルター */}
+        {/* フィルターとソート */}
         <div className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">
-            カテゴリ
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-            >
-              すべて ({skillsData.length})
-            </button>
-            {categories.map((category) => (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-700">
+                カテゴリ:
+              </h2>
               <button
-                key={category.name}
-                onClick={() => setSelectedCategory(category.name)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === category.name
+                onClick={() => setSelectedCategory('all')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  selectedCategory === 'all'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
               >
-                {category.name} ({category.count})
+                すべて
               </button>
-            ))}
+              {categories.map((category) => (
+                <button
+                  key={category.name}
+                  onClick={() => setSelectedCategory(category.name)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    selectedCategory === category.name
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            {/* ソート */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                並び替え:
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'stars' | 'updatedAt')}
+                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="stars">人気順（Stars）</option>
+                <option value="updatedAt">最近更新された順</option>
+              </select>
+            </div>
           </div>
         </div>
 
