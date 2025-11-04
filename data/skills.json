@@ -1,0 +1,48 @@
+[
+  {
+    "id": "web-scraper",
+    "name": "Webスクレイピング",
+    "nameEn": "Web Scraper",
+    "description": "BeautifulSoupを使用してWebサイトからデータを抽出します",
+    "descriptionEn": "Extract data from websites using BeautifulSoup",
+    "category": "開発者ツール",
+    "categoryEn": "Developer Tools",
+    "author": "skillsmp-community",
+    "stars": 245,
+    "downloads": 1520,
+    "updatedAt": "2025-01-15",
+    "tags": ["python", "scraping", "beautifulsoup", "web"],
+    "githubUrl": "https://github.com/example/web-scraper",
+    "installCommand": "pip install beautifulsoup4 requests"
+  },
+  {
+    "id": "api-client",
+    "name": "REST APIクライアント",
+    "nameEn": "REST API Client",
+    "description": "REST APIと対話するための汎用クライアント",
+    "descriptionEn": "Generic client for interacting with REST APIs",
+    "category": "Web & アプリ開発",
+    "categoryEn": "Web & App Development",
+    "author": "api-tools",
+    "stars": 189,
+    "downloads": 980,
+    "updatedAt": "2025-01-10",
+    "tags": ["api", "rest", "client", "http"],
+    "githubUrl": "https://github.com/example/api-client"
+  },
+  {
+    "id": "data-analyzer",
+    "name": "データ分析ツール",
+    "nameEn": "Data Analyzer",
+    "description": "CSVやJSONデータを分析・可視化します",
+    "descriptionEn": "Analyze and visualize CSV and JSON data",
+    "category": "データサイエンス",
+    "categoryEn": "Data Science",
+    "author": "data-team",
+    "stars": 312,
+    "downloads": 2100,
+    "updatedAt": "2025-01-18",
+    "tags": ["data", "analysis", "visualization", "pandas"],
+    "installCommand": "pip install pandas matplotlib"
+  }
+]
