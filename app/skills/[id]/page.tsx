@@ -19,7 +19,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/"
@@ -184,7 +184,7 @@ export default async function SkillDetailPage({ params }: PageProps) {
 
           {/* 右カラム - サイドバー */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+            <div className="sticky top-32 space-y-6">
               {/* スキル情報カード */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
