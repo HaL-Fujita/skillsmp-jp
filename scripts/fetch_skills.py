@@ -87,6 +87,22 @@ def get_repo_contents(repo_full_name: str, path: str = "") -> List[Dict[str, Any
     return github_api_request(url)
 
 
+def get_last_commit_date(repo_full_name: str, path: str) -> Optional[str]:
+    """特定パスの最終コミット日を取得"""
+    try:
+        url = f"{GITHUB_API_BASE}/repos/{repo_full_name}/commits?path={path}&per_page=1"
+        commits = github_api_request(url, allow_404=True)
+
+        if commits and len(commits) > 0:
+            commit_date = commits[0]['commit']['committer']['date']
+            # ISO 8601形式 (2024-01-15T10:30:00Z) を YYYY-MM-DD形式に変換
+            return commit_date.split('T')[0]
+        return None
+    except Exception as e:
+        print(f"  Warning: Could not fetch commit date: {e}")
+        return None
+
+
 def fetch_skill_md(repo_full_name: str, skill_path: str) -> Dict[str, Any]:
     """スキルディレクトリからSKILL.mdを取得してパース"""
     import base64
@@ -192,7 +208,7 @@ def translate_text(text: str, method: str = TRANSLATION_METHOD) -> str:
     return translated if translated else text
 
 
-def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any]) -> Dict[str, Any]:
+def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any], updated_at: Optional[str] = None) -> Dict[str, Any]:
     """スキルデータを作成"""
     # IDを生成
     skill_id = f"{repo['owner']['login']}-{skill_name}".lower().replace("_", "-")
@@ -231,7 +247,7 @@ def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[st
         "author": repo["owner"]["login"],
         "stars": repo["stargazers_count"],
         "downloads": None,
-        "updatedAt": datetime.now().strftime("%Y-%m-%d"),
+        "updatedAt": updated_at if updated_at else datetime.now().strftime("%Y-%m-%d"),
         "tags": tags if tags else ["skill"],
         "githubUrl": f"{repo['html_url']}/tree/main/{skill_name}",
         "installCommand": None,
@@ -277,9 +293,13 @@ def main():
         skill_data = fetch_skill_md(repo["full_name"], skill_name)
 
         if skill_data and skill_data.get("name"):
-            skill = create_skill_data(repo, skill_name, skill_data)
+            # 最終更新日を取得
+            print(f"  Fetching last commit date...")
+            updated_at = get_last_commit_date(repo["full_name"], skill_name)
+
+            skill = create_skill_data(repo, skill_name, skill_data, updated_at)
             skills.append(skill)
-            print(f"  ✓ {skill['name']} ({skill['category']})")
+            print(f"  ✓ {skill['name']} ({skill['category']}) - Updated: {skill['updatedAt']}")
         else:
             print(f"  ✗ No valid SKILL.md found")
 
