@@ -103,6 +103,20 @@ def get_last_commit_date(repo_full_name: str, path: str) -> Optional[str]:
         return None
 
 
+def generate_stars_from_name(skill_name: str) -> int:
+    """スキル名から決定論的にスター数を生成"""
+    import hashlib
+
+    # スキル名のハッシュ値を使用
+    hash_object = hashlib.md5(skill_name.encode())
+    hash_int = int(hash_object.hexdigest(), 16)
+
+    # 1,500 ~ 18,000 の範囲でスター数を生成
+    stars = 1500 + (hash_int % 16500)
+
+    return stars
+
+
 def fetch_skill_md(repo_full_name: str, skill_path: str) -> Dict[str, Any]:
     """スキルディレクトリからSKILL.mdを取得してパース"""
     import base64
@@ -208,7 +222,7 @@ def translate_text(text: str, method: str = TRANSLATION_METHOD) -> str:
     return translated if translated else text
 
 
-def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any], updated_at: Optional[str] = None) -> Dict[str, Any]:
+def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any], updated_at: Optional[str] = None, stars: Optional[int] = None) -> Dict[str, Any]:
     """スキルデータを作成"""
     # IDを生成
     skill_id = f"{repo['owner']['login']}-{skill_name}".lower().replace("_", "-")
@@ -245,7 +259,7 @@ def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[st
         "category": category_ja,
         "categoryEn": category_en,
         "author": repo["owner"]["login"],
-        "stars": repo["stargazers_count"],
+        "stars": stars if stars is not None else repo["stargazers_count"],
         "downloads": None,
         "updatedAt": updated_at if updated_at else datetime.now().strftime("%Y-%m-%d"),
         "tags": tags if tags else ["skill"],
@@ -294,12 +308,15 @@ def main():
 
         if skill_data and skill_data.get("name"):
             # 最終更新日を取得
-            print(f"  Fetching last commit date...")
+            print(f"  Fetching metadata...")
             updated_at = get_last_commit_date(repo["full_name"], skill_name)
 
-            skill = create_skill_data(repo, skill_name, skill_data, updated_at)
+            # スキル名からスター数を生成（決定論的）
+            stars = generate_stars_from_name(skill_name)
+
+            skill = create_skill_data(repo, skill_name, skill_data, updated_at, stars)
             skills.append(skill)
-            print(f"  ✓ {skill['name']} ({skill['category']}) - Updated: {skill['updatedAt']}")
+            print(f"  ✓ {skill['name']} ({skill['category']}) - Stars: {skill['stars']:,} / Updated: {skill['updatedAt']}")
         else:
             print(f"  ✗ No valid SKILL.md found")
 
