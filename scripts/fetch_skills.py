@@ -41,7 +41,7 @@ CATEGORY_MAP = {
 }
 
 
-def github_api_request(url: str) -> Dict[str, Any]:
+def github_api_request(url: str, allow_404: bool = False) -> Dict[str, Any]:
     """GitHub APIリクエストを送信"""
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -56,88 +56,92 @@ def github_api_request(url: str) -> Dict[str, Any]:
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read().decode())
     except urllib.error.HTTPError as e:
+        if e.code == 404 and allow_404:
+            return {}
         print(f"Error: {e.code} - {e.reason}")
         print(f"URL: {url}")
         if e.code == 403:
             print("Rate limit exceeded. Set GITHUB_TOKEN environment variable.")
-        sys.exit(1)
+        if not allow_404:
+            sys.exit(1)
+        return {}
 
 
-def search_skill_repos() -> List[Dict[str, Any]]:
-    """Claudeスキルのリポジトリを検索"""
-    print("Searching for Claude skill repositories...")
-
-    # 検索クエリ: marketplace.jsonを含むリポジトリ
-    query = "filename:marketplace.json claude skill"
-    url = f"{GITHUB_API_BASE}/search/code?q={urllib.parse.quote(query)}&per_page=100"
-
-    result = github_api_request(url)
-    repos = []
-
-    # リポジトリ情報を収集
-    seen_repos = set()
-    for item in result.get("items", []):
-        repo_url = item["repository"]["url"]
-        if repo_url not in seen_repos:
-            seen_repos.add(repo_url)
-            repo_data = github_api_request(repo_url)
-            repos.append(repo_data)
-
-    print(f"Found {len(repos)} repositories")
-    return repos
+def get_anthropics_skills_repo() -> Dict[str, Any]:
+    """anthropics/skillsリポジトリの情報を取得"""
+    print("Fetching anthropics/skills repository...")
+    url = f"{GITHUB_API_BASE}/repos/anthropics/skills"
+    return github_api_request(url)
 
 
-def fetch_marketplace_json(repo: Dict[str, Any]) -> Dict[str, Any]:
-    """リポジトリからmarketplace.jsonを取得"""
-    contents_url = repo["contents_url"].replace("{+path}", "marketplace.json")
+def get_repo_contents(repo_full_name: str, path: str = "") -> List[Dict[str, Any]]:
+    """リポジトリの特定パスの内容を取得"""
+    url = f"{GITHUB_API_BASE}/repos/{repo_full_name}/contents/{path}"
+    return github_api_request(url)
+
+
+def fetch_skill_md(repo_full_name: str, skill_path: str) -> Dict[str, Any]:
+    """スキルディレクトリからSKILL.mdを取得してパース"""
+    import base64
+    import re
 
     try:
-        content_data = github_api_request(contents_url)
+        # SKILL.mdを取得
+        url = f"{GITHUB_API_BASE}/repos/{repo_full_name}/contents/{skill_path}/SKILL.md"
+        content_data = github_api_request(url, allow_404=True)
+
+        if not content_data:
+            return {}
+
         if content_data.get("encoding") == "base64":
-            import base64
             content = base64.b64decode(content_data["content"]).decode("utf-8")
-            return json.loads(content)
+
+            # YAMLフロントマターを抽出
+            match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+            if match:
+                yaml_content = match.group(1)
+                data = {}
+                for line in yaml_content.split("\n"):
+                    if ":" in line:
+                        key, value = line.split(":", 1)
+                        data[key.strip()] = value.strip().strip('"\'')
+                return data
     except Exception as e:
-        print(f"Error fetching marketplace.json from {repo['full_name']}: {e}")
+        print(f"  Warning: Could not fetch SKILL.md: {e}")
 
     return {}
 
 
-def extract_skill_data(repo: Dict[str, Any], marketplace_data: Dict[str, Any]) -> Dict[str, Any]:
-    """リポジトリとmarketplace.jsonからスキルデータを抽出"""
-    # IDを生成（リポジトリ名をスラッグ化）
-    skill_id = repo["full_name"].replace("/", "-").lower()
+def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any]) -> Dict[str, Any]:
+    """スキルデータを作成"""
+    # IDを生成
+    skill_id = f"{repo['owner']['login']}-{skill_name}".lower().replace("_", "-")
 
     # カテゴリを日本語に変換
-    category_en = marketplace_data.get("category", "Developer Tools")
+    category_en = skill_data.get("category", "Developer Tools")
     category_ja = CATEGORY_MAP.get(category_en, "開発者ツール")
-
-    # 更新日時
-    updated_at = repo.get("updated_at", repo.get("pushed_at", datetime.now().isoformat()))
-    updated_date = updated_at.split("T")[0]
 
     # タグを生成
     tags = []
-    if repo.get("language"):
-        tags.append(repo["language"].lower())
-    tags.extend(marketplace_data.get("tags", [])[:5])  # 最大5個
+    if skill_data.get("tags"):
+        tags = [tag.strip() for tag in skill_data.get("tags", "").split(",")][:5]
 
     # スキルデータ
     skill = {
         "id": skill_id,
-        "name": marketplace_data.get("name", repo["name"]),
-        "nameEn": marketplace_data.get("name", repo["name"]),
-        "description": marketplace_data.get("description", repo.get("description", "")),
-        "descriptionEn": marketplace_data.get("description", repo.get("description", "")),
+        "name": skill_data.get("name", skill_name),
+        "nameEn": skill_data.get("name", skill_name),
+        "description": skill_data.get("description", ""),
+        "descriptionEn": skill_data.get("description", ""),
         "category": category_ja,
         "categoryEn": category_en,
         "author": repo["owner"]["login"],
         "stars": repo["stargazers_count"],
-        "downloads": None,  # GitHub APIでは取得不可
-        "updatedAt": updated_date,
-        "tags": tags,
-        "githubUrl": repo["html_url"],
-        "installCommand": marketplace_data.get("install_command"),
+        "downloads": None,
+        "updatedAt": datetime.now().strftime("%Y-%m-%d"),
+        "tags": tags if tags else ["skill"],
+        "githubUrl": f"{repo['html_url']}/tree/main/{skill_name}",
+        "installCommand": None,
     }
 
     return skill
@@ -148,27 +152,39 @@ def main():
     print("Claude Skills Data Fetcher")
     print("=" * 50)
 
-    # GitHub APIでスキルリポジトリを検索
-    repos = search_skill_repos()
+    # anthropics/skillsリポジトリを取得
+    repo = get_anthropics_skills_repo()
+    print(f"Repository: {repo['full_name']}")
+    print(f"Stars: {repo['stargazers_count']}")
+    print()
 
-    if not repos:
-        print("No repositories found. Exiting.")
-        sys.exit(1)
+    # リポジトリのルートディレクトリを取得
+    print("Fetching skills list...")
+    contents = get_repo_contents(repo["full_name"], "")
 
-    # 各リポジトリからスキルデータを抽出
+    # スキルディレクトリを探す
+    skill_dirs = []
+    for item in contents:
+        if item["type"] == "dir" and not item["name"].startswith("."):
+            skill_dirs.append(item["name"])
+
+    print(f"Found {len(skill_dirs)} potential skill directories")
+    print()
+
+    # 各スキルディレクトリからデータを抽出
     skills = []
-    for i, repo in enumerate(repos[:50], 1):  # 最大50個
-        print(f"Processing [{i}/{min(len(repos), 50)}]: {repo['full_name']}")
+    for i, skill_name in enumerate(skill_dirs[:50], 1):  # 最大50個
+        print(f"Processing [{i}/{min(len(skill_dirs), 50)}]: {skill_name}")
 
-        # marketplace.jsonを取得
-        marketplace_data = fetch_marketplace_json(repo)
+        # SKILL.mdを取得
+        skill_data = fetch_skill_md(repo["full_name"], skill_name)
 
-        if marketplace_data:
-            skill = extract_skill_data(repo, marketplace_data)
+        if skill_data and skill_data.get("name"):
+            skill = create_skill_data(repo, skill_name, skill_data)
             skills.append(skill)
             print(f"  ✓ {skill['name']} ({skill['category']})")
         else:
-            print(f"  ✗ No marketplace.json found")
+            print(f"  ✗ No valid SKILL.md found")
 
     # JSONファイルに保存
     output_path = os.path.join(os.path.dirname(__file__), "..", "data", "skills.json")
