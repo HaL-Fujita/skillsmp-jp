@@ -8,7 +8,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -26,7 +26,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -44,7 +44,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -62,7 +62,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -80,7 +80,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -91,14 +91,14 @@
   },
   {
     "id": "anthropics-mcp-builder",
-    "name": "mcpビルダー",
+    "name": "mcp ビルダー",
     "nameEn": "mcp-builder",
     "description": "LLM が適切に設計されたツールを通じて外部サービスと対話できるようにする、高品質の MCP (モデル コンテキスト プロトコル) サーバーを作成するためのガイド。Python (FastMCP) または Node/TypeScript (MCP SDK) のいずれであれ、外部 API またはサービスを統合するための MCP サーバーを構築するときに使用します。",
     "descriptionEn": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -116,7 +116,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -134,7 +134,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -152,7 +152,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -170,7 +170,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
@@ -188,7 +188,7 @@
     "category": "開発者ツール",
     "categoryEn": "Developer Tools",
     "author": "anthropics",
-    "stars": 15351,
+    "stars": 15352,
     "downloads": null,
     "updatedAt": "2025-11-04",
     "tags": [
