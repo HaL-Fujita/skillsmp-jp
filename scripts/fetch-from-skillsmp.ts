@@ -324,7 +324,7 @@ async function main(): Promise<void> {
 
     // 翻訳が有効な場合、並列で一括翻訳
     if (isTranslationEnabled()) {
-      console.log(`\n🌐 Starting parallel translation (this will take ~10-15 minutes)...`);
+      console.log(`\n🌐 Starting parallel translation (this will take ~15-20 minutes)...`);
       const startTime = Date.now();
 
       // すべてのスキル名を抽出
@@ -333,7 +333,7 @@ async function main(): Promise<void> {
 
       translatedNames = await batchTranslateParallel(
         allNames,
-        10, // 同時に10件翻訳
+        3, // 同時に3件翻訳（レート制限対策）
         (completed, total) => {
           if (completed % 50 === 0 || completed === total) {
             const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
@@ -349,7 +349,7 @@ async function main(): Promise<void> {
 
       translatedDescriptions = await batchTranslateParallel(
         allDescriptions,
-        10, // 同時に10件翻訳
+        3, // 同時に3件翻訳（レート制限対策）
         (completed, total) => {
           if (completed % 50 === 0 || completed === total) {
             const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);

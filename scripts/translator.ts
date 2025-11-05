@@ -2,9 +2,10 @@
  * Translation utility using OpenAI API
  *
  * Performance:
- * - Parallel translation: 10 concurrent requests
- * - Estimated time: 10-15 minutes for ~4,500 texts
+ * - Parallel translation: 3 concurrent requests (rate limit safe)
+ * - Estimated time: 15-20 minutes for ~4,500 texts
  * - Rate limit: OpenAI allows 500 req/min (Tier 1)
+ * - Retry logic: Exponential backoff for rate limit errors
  */
 
 import OpenAI from 'openai';
@@ -27,9 +28,9 @@ function getOpenAIClient(): OpenAI | null {
 }
 
 /**
- * OpenAI APIを使ってテキストを日本語に翻訳
+ * OpenAI APIを使ってテキストを日本語に翻訳（リトライロジック付き）
  */
-export async function translateWithOpenAI(text: string): Promise<string> {
+export async function translateWithOpenAI(text: string, retries: number = 3): Promise<string> {
   if (!text || text.trim().length === 0) {
     return text;
   }
@@ -46,33 +47,51 @@ export async function translateWithOpenAI(text: string): Promise<string> {
     return text;
   }
 
-  try {
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは優秀な翻訳者です。英語のテキストを自然な日本語に翻訳してください。技術用語は適切に翻訳し、固有名詞はそのまま残してください。',
-        },
-        {
-          role: 'user',
-          content: `次の英語テキストを日本語に翻訳してください。翻訳結果のみを返してください：\n\n${text}`,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 1000,
-    });
+  let lastError: any;
 
-    const translation = response.choices[0]?.message?.content?.trim() || text;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは優秀な翻訳者です。英語のテキストを自然な日本語に翻訳してください。技術用語は適切に翻訳し、固有名詞はそのまま残してください。',
+          },
+          {
+            role: 'user',
+            content: `次の英語テキストを日本語に翻訳してください。翻訳結果のみを返してください：\n\n${text}`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+      });
 
-    // キャッシュに保存
-    translationCache.set(cacheKey, translation);
+      const translation = response.choices[0]?.message?.content?.trim() || text;
 
-    return translation;
-  } catch (error) {
-    console.error(`❌ Translation error: ${error}`);
-    return text; // エラー時は元のテキストを返す
+      // キャッシュに保存
+      translationCache.set(cacheKey, translation);
+
+      return translation;
+    } catch (error: any) {
+      lastError = error;
+
+      // レート制限エラーの場合は指数バックオフで待機
+      if (error?.status === 429 || error?.code === 'rate_limit_exceeded') {
+        const waitTime = Math.pow(2, attempt) * 1000; // 1秒, 2秒, 4秒, 8秒...
+        console.warn(`⚠️  Rate limit hit, retrying in ${waitTime}ms (attempt ${attempt + 1}/${retries + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+
+      // その他のエラーの場合はリトライしない
+      console.error(`❌ Translation error: ${error}`);
+      break;
+    }
   }
+
+  console.error(`❌ Translation failed after ${retries + 1} attempts: ${lastError}`);
+  return text; // エラー時は元のテキストを返す
 }
 
 /**
