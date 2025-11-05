@@ -1,18 +1,26 @@
 #!/usr/bin/env tsx
 /**
- * SkillsMP.com API Scraper
+ * SkillsMP.com API Scraper with Translation
  *
  * skillsmp.comの公開APIから全スキルデータを取得し、
- * skillsmp-jpプロジェクト用のJSONファイルに変換します。
+ * OpenAI APIで日本語に翻訳してJSONファイルに保存します。
  *
  * 使い方:
- *   npm run scrape:skillsmp
+ *   OPENAI_API_KEY=sk-xxx npm run scrape:skillsmp
  *   または
- *   npx tsx scripts/fetch-from-skillsmp.ts
+ *   OPENAI_API_KEY=sk-xxx npx tsx scripts/fetch-from-skillsmp.ts
+ *
+ * 環境変数:
+ *   OPENAI_API_KEY - OpenAI APIキー（翻訳を有効にする場合は必須）
  */
 
 import fs from 'fs';
 import path from 'path';
+import { config } from 'dotenv';
+import { translateWithOpenAI, isTranslationEnabled, getTranslationStats } from './translator';
+
+// 環境変数を読み込み
+config();
 
 // ====================================
 // 型定義
@@ -200,16 +208,43 @@ async function fetchAllSkills(): Promise<SkillsMPSkill[]> {
 }
 
 /**
- * SkillsMPのデータを出力形式に変換
+ * SkillsMPのデータを出力形式に変換（翻訳付き）
  */
-function transformSkill(skill: SkillsMPSkill): OutputSkill {
+async function transformSkill(skill: SkillsMPSkill, index: number, total: number): Promise<OutputSkill> {
+  const categoryJa = translateCategory(skill.category);
+
+  // 翻訳が有効な場合は翻訳を実行
+  let nameJa = skill.name;
+  let descriptionJa = skill.description;
+
+  if (isTranslationEnabled()) {
+    try {
+      // 進捗表示
+      if (index % 10 === 0) {
+        console.log(`🌐 Translating... ${index}/${total}`);
+      }
+
+      // 名前と説明を翻訳
+      [nameJa, descriptionJa] = await Promise.all([
+        translateWithOpenAI(skill.name),
+        translateWithOpenAI(skill.description),
+      ]);
+
+      // レート制限対策（100ms待機）
+      await sleep(100);
+    } catch (error) {
+      console.warn(`⚠️  Translation failed for skill ${skill.id}:`, error);
+      // エラー時は英語のまま使用
+    }
+  }
+
   return {
     id: skill.id,
-    name: skill.name,
+    name: nameJa,
     nameEn: skill.name,
-    description: skill.description,
+    description: descriptionJa,
     descriptionEn: skill.description,
-    category: translateCategory(skill.category),
+    category: categoryJa,
     categoryEn: skill.category,
     author: skill.author,
     authorAvatar: skill.authorAvatar,
@@ -285,7 +320,14 @@ function printStatistics(skills: OutputSkill[]): void {
  * メイン実行関数
  */
 async function main(): Promise<void> {
-  console.log('🚀 Starting SkillsMP.com scraper...\n');
+  console.log('🚀 Starting SkillsMP.com scraper with translation...\n');
+
+  // 翻訳機能の状態を表示
+  if (isTranslationEnabled()) {
+    console.log('✅ Translation enabled (using OpenAI API)\n');
+  } else {
+    console.log('⚠️  Translation disabled (OPENAI_API_KEY not set)\n');
+  }
 
   try {
     // 全スキルを取得
@@ -293,8 +335,18 @@ async function main(): Promise<void> {
 
     console.log(`\n🔄 Transforming ${rawSkills.length} skills...`);
 
-    // データ変換
-    const transformedSkills = rawSkills.map(transformSkill);
+    // データ変換（翻訳付き）
+    const transformedSkills: OutputSkill[] = [];
+    for (let i = 0; i < rawSkills.length; i++) {
+      const transformed = await transformSkill(rawSkills[i], i + 1, rawSkills.length);
+      transformedSkills.push(transformed);
+    }
+
+    // 翻訳統計を表示
+    if (isTranslationEnabled()) {
+      const stats = getTranslationStats();
+      console.log(`\n🌐 Translation stats: ${stats.cacheSize} unique texts cached`);
+    }
 
     // ファイルに保存
     saveToFile(transformedSkills);

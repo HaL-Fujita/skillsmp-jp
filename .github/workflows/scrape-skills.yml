@@ -37,6 +37,8 @@ jobs:
         run: npm ci
 
       - name: Run scraper
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: npm run scrape
 
       - name: Check for changes

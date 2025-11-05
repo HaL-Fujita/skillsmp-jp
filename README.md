@@ -31,13 +31,40 @@ npm run dev
 
 ### スキルデータの取得
 
-```bash
-# SkillsMP.com から最新データを取得
-npm run scrape
+#### 基本的な使い方（翻訳なし）
 
-# または直接実行
-npx tsx scripts/fetch-from-skillsmp.ts
+```bash
+# SkillsMP.com から最新データを取得（英語のまま）
+npm run scrape
 ```
+
+#### 日本語翻訳を有効にする
+
+OpenAI APIを使って、スキル名と説明を自動的に日本語に翻訳できます。
+
+1. **OpenAI APIキーを取得**
+   - https://platform.openai.com/api-keys にアクセス
+   - 新しいAPIキーを作成
+
+2. **環境変数を設定**
+   ```bash
+   # .envファイルを作成
+   cp .env.example .env
+
+   # .envファイルを編集してAPIキーを設定
+   # OPENAI_API_KEY=sk-your-api-key-here
+   ```
+
+3. **翻訳付きでスクレイピング実行**
+   ```bash
+   # .envファイルから自動的に読み込まれます
+   npm run scrape
+
+   # または環境変数を直接指定
+   OPENAI_API_KEY=sk-xxx npm run scrape
+   ```
+
+**注意**: 翻訳機能を使用すると、OpenAI APIの使用料金が発生します（約2,277スキル × 2テキスト = 約$1-2程度）。
 
 ## 📂 プロジェクト構成
 
@@ -203,7 +230,22 @@ vercel
 
 ### 環境変数
 
-現在、特別な環境変数は不要です。すべて公開APIを使用しています。
+| 変数名 | 必須 | 説明 |
+|--------|------|------|
+| `OPENAI_API_KEY` | オプション | OpenAI APIキー。スキルデータを日本語に翻訳する場合に必要です。[取得方法](https://platform.openai.com/api-keys) |
+
+**使用例:**
+
+```bash
+# .envファイルを作成
+cp .env.example .env
+
+# .envファイルを編集
+echo "OPENAI_API_KEY=sk-your-api-key-here" > .env
+
+# スクレイピング実行（.envから自動読み込み）
+npm run scrape
+```
 
 ## 🤝 コントリビューション
 
