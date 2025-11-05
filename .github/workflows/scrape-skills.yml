@@ -53,6 +53,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add data/skills.json
           git commit -m "chore: update skills data from SkillsMP.com [skip ci]"
+          git pull --rebase origin main
           git push
 
       - name: No changes detected
