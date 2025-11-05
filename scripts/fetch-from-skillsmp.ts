@@ -17,7 +17,12 @@
 import fs from 'fs';
 import path from 'path';
 import { config } from 'dotenv';
-import { translateWithOpenAI, isTranslationEnabled, getTranslationStats } from './translator';
+import {
+  translateWithOpenAI,
+  batchTranslateParallel,
+  isTranslationEnabled,
+  getTranslationStats
+} from './translator';
 
 // 環境変数を読み込み
 config();
@@ -208,41 +213,20 @@ async function fetchAllSkills(): Promise<SkillsMPSkill[]> {
 }
 
 /**
- * SkillsMPのデータを出力形式に変換（翻訳付き）
+ * SkillsMPのデータを出力形式に変換（翻訳なし版）
  */
-async function transformSkill(skill: SkillsMPSkill, index: number, total: number): Promise<OutputSkill> {
+function transformSkill(
+  skill: SkillsMPSkill,
+  nameJa?: string,
+  descriptionJa?: string
+): OutputSkill {
   const categoryJa = translateCategory(skill.category);
-
-  // 翻訳が有効な場合は翻訳を実行
-  let nameJa = skill.name;
-  let descriptionJa = skill.description;
-
-  if (isTranslationEnabled()) {
-    try {
-      // 進捗表示
-      if (index % 10 === 0) {
-        console.log(`🌐 Translating... ${index}/${total}`);
-      }
-
-      // 名前と説明を翻訳
-      [nameJa, descriptionJa] = await Promise.all([
-        translateWithOpenAI(skill.name),
-        translateWithOpenAI(skill.description),
-      ]);
-
-      // レート制限対策（100ms待機）
-      await sleep(100);
-    } catch (error) {
-      console.warn(`⚠️  Translation failed for skill ${skill.id}:`, error);
-      // エラー時は英語のまま使用
-    }
-  }
 
   return {
     id: skill.id,
-    name: nameJa,
+    name: nameJa || skill.name,
     nameEn: skill.name,
-    description: descriptionJa,
+    description: descriptionJa || skill.description,
     descriptionEn: skill.description,
     category: categoryJa,
     categoryEn: skill.category,
@@ -335,18 +319,63 @@ async function main(): Promise<void> {
 
     console.log(`\n🔄 Transforming ${rawSkills.length} skills...`);
 
-    // データ変換（翻訳付き）
-    const transformedSkills: OutputSkill[] = [];
-    for (let i = 0; i < rawSkills.length; i++) {
-      const transformed = await transformSkill(rawSkills[i], i + 1, rawSkills.length);
-      transformedSkills.push(transformed);
+    let translatedNames: string[] = [];
+    let translatedDescriptions: string[] = [];
+
+    // 翻訳が有効な場合、並列で一括翻訳
+    if (isTranslationEnabled()) {
+      console.log(`\n🌐 Starting parallel translation (this will take ~10-15 minutes)...`);
+      const startTime = Date.now();
+
+      // すべてのスキル名を抽出
+      const allNames = rawSkills.map(s => s.name);
+      console.log(`\n📝 Translating ${allNames.length} skill names...`);
+
+      translatedNames = await batchTranslateParallel(
+        allNames,
+        10, // 同時に10件翻訳
+        (completed, total) => {
+          if (completed % 50 === 0 || completed === total) {
+            const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
+            const percent = ((completed / total) * 100).toFixed(1);
+            console.log(`  ⏱️  Names: ${completed}/${total} (${percent}%) - ${elapsed}min elapsed`);
+          }
+        }
+      );
+
+      // すべてのスキル説明を抽出
+      const allDescriptions = rawSkills.map(s => s.description);
+      console.log(`\n📄 Translating ${allDescriptions.length} descriptions...`);
+
+      translatedDescriptions = await batchTranslateParallel(
+        allDescriptions,
+        10, // 同時に10件翻訳
+        (completed, total) => {
+          if (completed % 50 === 0 || completed === total) {
+            const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
+            const percent = ((completed / total) * 100).toFixed(1);
+            console.log(`  ⏱️  Descriptions: ${completed}/${total} (${percent}%) - ${elapsed}min elapsed`);
+          }
+        }
+      );
+
+      const totalTime = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
+      console.log(`\n✅ Translation completed in ${totalTime} minutes!`);
+
+      // 翻訳統計を表示
+      const stats = getTranslationStats();
+      console.log(`📊 Translation stats: ${stats.cacheSize} unique texts cached`);
     }
 
-    // 翻訳統計を表示
-    if (isTranslationEnabled()) {
-      const stats = getTranslationStats();
-      console.log(`\n🌐 Translation stats: ${stats.cacheSize} unique texts cached`);
-    }
+    // データ変換（翻訳結果を適用）
+    console.log(`\n🔄 Building skill objects...`);
+    const transformedSkills: OutputSkill[] = rawSkills.map((skill, index) => {
+      return transformSkill(
+        skill,
+        translatedNames[index],
+        translatedDescriptions[index]
+      );
+    });
 
     // ファイルに保存
     saveToFile(transformedSkills);

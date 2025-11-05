@@ -1,5 +1,10 @@
 /**
  * Translation utility using OpenAI API
+ *
+ * Performance:
+ * - Parallel translation: 10 concurrent requests
+ * - Estimated time: 10-15 minutes for ~4,500 texts
+ * - Rate limit: OpenAI allows 500 req/min (Tier 1)
  */
 
 import OpenAI from 'openai';
@@ -87,6 +92,62 @@ export async function batchTranslate(
     // レート制限を避けるため遅延
     if (i < texts.length - 1 && delayMs > 0) {
       await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  return results;
+}
+
+/**
+ * 並列バッチ翻訳（高速版）
+ * 複数のテキストを並列に翻訳します
+ *
+ * @param texts 翻訳するテキストの配列
+ * @param concurrency 同時実行数（デフォルト: 10）
+ * @param onProgress 進捗コールバック
+ */
+export async function batchTranslateParallel(
+  texts: string[],
+  concurrency: number = 10,
+  onProgress?: (completed: number, total: number) => void
+): Promise<string[]> {
+  if (texts.length === 0) {
+    return [];
+  }
+
+  const results: string[] = new Array(texts.length);
+  let completed = 0;
+
+  // バッチに分割
+  for (let i = 0; i < texts.length; i += concurrency) {
+    const batch = texts.slice(i, i + concurrency);
+    const batchPromises = batch.map(async (text, batchIndex) => {
+      const globalIndex = i + batchIndex;
+      try {
+        const translated = await translateWithOpenAI(text);
+        results[globalIndex] = translated;
+        completed++;
+        if (onProgress) {
+          onProgress(completed, texts.length);
+        }
+        return translated;
+      } catch (error) {
+        console.error(`Translation failed for index ${globalIndex}:`, error);
+        results[globalIndex] = text; // フォールバック：元のテキスト
+        completed++;
+        if (onProgress) {
+          onProgress(completed, texts.length);
+        }
+        return text;
+      }
+    });
+
+    // バッチ内で並列実行
+    await Promise.allSettled(batchPromises);
+
+    // バッチ間で少し待機（レート制限対策）
+    if (i + concurrency < texts.length) {
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
 
