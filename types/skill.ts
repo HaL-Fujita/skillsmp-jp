@@ -1,5 +1,18 @@
 // スキルの型定義
 
+export interface GitHubStatistics {
+  forks: number;
+  watchers: number;
+  openIssues: number;
+  openPullRequests: number | null;
+  contributors: number | null;
+  language: string;
+  license: string | null;
+  size: number; // KB単位
+  createdAt: string | null;
+  pushedAt: string | null;
+}
+
 export interface Skill {
   id: string;
   name: string;
@@ -15,6 +28,7 @@ export interface Skill {
   tags: string[];
   githubUrl?: string;
   installCommand?: string | null;
+  github?: GitHubStatistics | null; // GitHub統計情報
 }
 
 export interface Category {

@@ -231,6 +231,85 @@ export default async function SkillDetailPage({ params }: PageProps) {
                   </div>
                 </dl>
 
+                {/* GitHub統計情報 */}
+                {skill.github && (
+                  <div className="mt-6 pt-6 border-t">
+                    <h4 className="text-sm font-bold text-gray-900 mb-3">GitHub統計</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center gap-1 mb-1">
+                          <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/>
+                          </svg>
+                          <dt className="text-xs text-gray-600">Forks</dt>
+                        </div>
+                        <dd className="text-sm font-semibold text-gray-900">{skill.github.forks.toLocaleString()}</dd>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center gap-1 mb-1">
+                          <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 2a.5.5 0 0 1 .5.5V4a.5.5 0 0 1-1 0V2.5A.5.5 0 0 1 8 2zM3.732 3.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707zM2 8a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 8zm9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5zm.754-4.246a.389.389 0 0 0-.527-.02L7.547 7.31A.91.91 0 1 0 8.85 8.569l3.434-4.297a.389.389 0 0 0-.029-.518z"/>
+                            <path fillRule="evenodd" d="M6.664 15.889A8 8 0 1 1 9.336.11a8 8 0 0 1-2.672 15.78zm-4.665-4.283A11.945 11.945 0 0 1 8 10c2.186 0 4.236.585 6.001 1.606a7 7 0 1 0-12.002 0z"/>
+                          </svg>
+                          <dt className="text-xs text-gray-600">Watchers</dt>
+                        </div>
+                        <dd className="text-sm font-semibold text-gray-900">{skill.github.watchers.toLocaleString()}</dd>
+                      </div>
+
+                      {skill.github.contributors && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center gap-1 mb-1">
+                            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                              <path fillRule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
+                              <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                            </svg>
+                            <dt className="text-xs text-gray-600">Contributors</dt>
+                          </div>
+                          <dd className="text-sm font-semibold text-gray-900">{skill.github.contributors.toLocaleString()}</dd>
+                        </div>
+                      )}
+
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center gap-1 mb-1">
+                          <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
+                          </svg>
+                          <dt className="text-xs text-gray-600">Issues</dt>
+                        </div>
+                        <dd className="text-sm font-semibold text-gray-900">{skill.github.openIssues.toLocaleString()}</dd>
+                      </div>
+
+                      {skill.github.language && (
+                        <div className="bg-gray-50 rounded-lg p-3 col-span-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                              <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 0 1-.524 2.318l-.003.011a10.722 10.722 0 0 1-.244.637c-.079.186.074.394.273.362a21.673 21.673 0 0 0 .693-.125zm.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6c0 3.193-3.004 6-7 6a8.06 8.06 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a10.97 10.97 0 0 0 .398-2z"/>
+                            </svg>
+                            <dt className="text-xs text-gray-600">言語</dt>
+                          </div>
+                          <dd className="text-sm font-semibold text-gray-900">{skill.github.language}</dd>
+                        </div>
+                      )}
+
+                      {skill.github.license && (
+                        <div className="bg-gray-50 rounded-lg p-3 col-span-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 4.854a.5.5 0 0 1 1 0v3.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 8.647V4.854z"/>
+                            </svg>
+                            <dt className="text-xs text-gray-600">ライセンス</dt>
+                          </div>
+                          <dd className="text-sm font-semibold text-gray-900">{skill.github.license}</dd>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* GitHubリンク */}
                 {skill.githubUrl && (
                   <div className="mt-6 pt-6 border-t">

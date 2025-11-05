@@ -103,18 +103,76 @@ def get_last_commit_date(repo_full_name: str, path: str) -> Optional[str]:
         return None
 
 
-def generate_stars_from_name(skill_name: str) -> int:
-    """スキル名から決定論的にスター数を生成"""
-    import hashlib
+def get_repo_statistics(repo_full_name: str) -> Dict[str, Any]:
+    """リポジトリの詳細統計情報を取得"""
+    print(f"  Fetching repository statistics...")
 
-    # スキル名のハッシュ値を使用
-    hash_object = hashlib.md5(skill_name.encode())
-    hash_int = int(hash_object.hexdigest(), 16)
+    # 基本的なリポジトリ情報
+    repo_url = f"{GITHUB_API_BASE}/repos/{repo_full_name}"
+    repo_data = github_api_request(repo_url, allow_404=True)
 
-    # 1,500 ~ 18,000 の範囲でスター数を生成
-    stars = 1500 + (hash_int % 16500)
+    if not repo_data:
+        return {}
 
-    return stars
+    # コントリビューター数を取得
+    contributors_url = f"{GITHUB_API_BASE}/repos/{repo_full_name}/contributors?per_page=1"
+    try:
+        req = urllib.request.Request(contributors_url)
+        if GITHUB_TOKEN:
+            req.add_header("Authorization", f"token {GITHUB_TOKEN}")
+        req.add_header("User-Agent", "skillsmp-jp-fetcher")
+
+        with urllib.request.urlopen(req) as response:
+            # Linkヘッダーから総コントリビューター数を取得
+            link_header = response.headers.get('Link', '')
+            contributors_count = 1
+            if 'rel="last"' in link_header:
+                import re
+                match = re.search(r'page=(\d+)>; rel="last"', link_header)
+                if match:
+                    contributors_count = int(match.group(1))
+    except Exception as e:
+        print(f"  Warning: Could not fetch contributors count: {e}")
+        contributors_count = None
+
+    # プルリクエスト数を取得（オープン）
+    pulls_url = f"{GITHUB_API_BASE}/repos/{repo_full_name}/pulls?state=open&per_page=1"
+    try:
+        req = urllib.request.Request(pulls_url)
+        if GITHUB_TOKEN:
+            req.add_header("Authorization", f"token {GITHUB_TOKEN}")
+        req.add_header("User-Agent", "skillsmp-jp-fetcher")
+
+        with urllib.request.urlopen(req) as response:
+            link_header = response.headers.get('Link', '')
+            open_pulls_count = 0
+            if 'rel="last"' in link_header:
+                import re
+                match = re.search(r'page=(\d+)>; rel="last"', link_header)
+                if match:
+                    open_pulls_count = int(match.group(1))
+    except Exception as e:
+        print(f"  Warning: Could not fetch pull requests count: {e}")
+        open_pulls_count = None
+
+    statistics = {
+        "stars": repo_data.get("stargazers_count", 0),
+        "forks": repo_data.get("forks_count", 0),
+        "watchers": repo_data.get("watchers_count", 0),
+        "openIssues": repo_data.get("open_issues_count", 0),
+        "openPullRequests": open_pulls_count,
+        "contributors": contributors_count,
+        "language": repo_data.get("language", "Unknown"),
+        "license": repo_data.get("license", {}).get("name", None) if repo_data.get("license") else None,
+        "size": repo_data.get("size", 0),  # KB単位
+        "defaultBranch": repo_data.get("default_branch", "main"),
+        "createdAt": repo_data.get("created_at", "").split('T')[0] if repo_data.get("created_at") else None,
+        "pushedAt": repo_data.get("pushed_at", "").split('T')[0] if repo_data.get("pushed_at") else None,
+    }
+
+    print(f"    ⭐ Stars: {statistics['stars']:,} | 🍴 Forks: {statistics['forks']:,} | 👥 Contributors: {statistics['contributors'] or 'N/A'}")
+
+    return statistics
 
 
 def fetch_skill_md(repo_full_name: str, skill_path: str) -> Dict[str, Any]:
@@ -222,7 +280,7 @@ def translate_text(text: str, method: str = TRANSLATION_METHOD) -> str:
     return translated if translated else text
 
 
-def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any], updated_at: Optional[str] = None, stars: Optional[int] = None) -> Dict[str, Any]:
+def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[str, Any], updated_at: Optional[str] = None, statistics: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """スキルデータを作成"""
     # IDを生成
     skill_id = f"{repo['owner']['login']}-{skill_name}".lower().replace("_", "-")
@@ -259,12 +317,25 @@ def create_skill_data(repo: Dict[str, Any], skill_name: str, skill_data: Dict[st
         "category": category_ja,
         "categoryEn": category_en,
         "author": repo["owner"]["login"],
-        "stars": stars if stars is not None else repo["stargazers_count"],
+        "stars": statistics.get("stars", repo["stargazers_count"]) if statistics else repo["stargazers_count"],
         "downloads": None,
         "updatedAt": updated_at if updated_at else datetime.now().strftime("%Y-%m-%d"),
         "tags": tags if tags else ["skill"],
         "githubUrl": f"{repo['html_url']}/tree/main/{skill_name}",
         "installCommand": None,
+        # GitHub統計情報
+        "github": {
+            "forks": statistics.get("forks", 0) if statistics else 0,
+            "watchers": statistics.get("watchers", 0) if statistics else 0,
+            "openIssues": statistics.get("openIssues", 0) if statistics else 0,
+            "openPullRequests": statistics.get("openPullRequests", 0) if statistics else 0,
+            "contributors": statistics.get("contributors") if statistics else None,
+            "language": statistics.get("language", "Unknown") if statistics else "Unknown",
+            "license": statistics.get("license") if statistics else None,
+            "size": statistics.get("size", 0) if statistics else 0,
+            "createdAt": statistics.get("createdAt") if statistics else None,
+            "pushedAt": statistics.get("pushedAt") if statistics else None,
+        } if statistics else None,
     }
 
     return skill
@@ -298,6 +369,11 @@ def main():
     print(f"Found {len(skill_dirs)} potential skill directories")
     print()
 
+    # リポジトリ全体の統計情報を1回取得
+    print("Fetching repository statistics (this may take a moment)...")
+    repo_statistics = get_repo_statistics(repo["full_name"])
+    print()
+
     # 各スキルディレクトリからデータを抽出
     skills = []
     for i, skill_name in enumerate(skill_dirs[:50], 1):  # 最大50個
@@ -311,10 +387,7 @@ def main():
             print(f"  Fetching metadata...")
             updated_at = get_last_commit_date(repo["full_name"], skill_name)
 
-            # スキル名からスター数を生成（決定論的）
-            stars = generate_stars_from_name(skill_name)
-
-            skill = create_skill_data(repo, skill_name, skill_data, updated_at, stars)
+            skill = create_skill_data(repo, skill_name, skill_data, updated_at, repo_statistics)
             skills.append(skill)
             print(f"  ✓ {skill['name']} ({skill['category']}) - Stars: {skill['stars']:,} / Updated: {skill['updatedAt']}")
         else:
