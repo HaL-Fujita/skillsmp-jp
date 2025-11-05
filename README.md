@@ -36,6 +36,9 @@ npm run dev
 ```bash
 # SkillsMP.com から最新データを取得（英語のまま）
 npm run scrape
+
+# スクレイピング後、自動的にGitにコミット・プッシュ
+npm run scrape:push
 ```
 
 #### 日本語翻訳を有効にする
@@ -62,6 +65,9 @@ OpenAI APIを使って、スキル名と説明を自動的に日本語に翻訳�
 
    # または環境変数を直接指定
    OPENAI_API_KEY=sk-xxx npm run scrape
+
+   # 翻訳後、自動的にGitにコミット・プッシュ
+   npm run scrape:push
    ```
 
 **注意**:
@@ -210,6 +216,8 @@ fs.writeFileSync('data/skills.json', JSON.stringify(transformedSkills, null, 2))
 | `npm start` | 本番サーバーを起動 |
 | `npm run lint` | ESLintを実行 |
 | `npm run scrape` | スキルデータを取得 |
+| `npm run scrape:push` | スキルデータを取得してGitに自動プッシュ |
+| `npm run push` | data/skills.jsonの変更をGitにプッシュ |
 
 ## 🔍 カテゴリ一覧
 

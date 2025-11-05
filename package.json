@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "scrape": "tsx scripts/fetch-from-skillsmp.ts",
-    "scrape:skillsmp": "tsx scripts/fetch-from-skillsmp.ts"
+    "scrape:skillsmp": "tsx scripts/fetch-from-skillsmp.ts",
+    "scrape:push": "npm run scrape && bash scripts/commit-and-push.sh",
+    "push": "bash scripts/commit-and-push.sh"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
