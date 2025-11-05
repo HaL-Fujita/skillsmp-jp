@@ -120,6 +120,17 @@ skillsmp-jp/
 - **データソース**: [SkillsMP.com API](https://skillsmp.com/api/skills)
 - **自動コミット**: データが更新された場合のみ自動コミット・プッシュ
 
+**🔧 セットアップ方法**: [自動実行の設定ガイド](./AUTOMATION.md)を参照してください。
+
+#### GitHub Secretsの設定（必須）
+
+翻訳機能を自動実行で使うには、GitHub Secretsの設定が必要です：
+
+1. リポジトリの **Settings** → **Secrets and variables** → **Actions**
+2. **New repository secret** をクリック
+3. **Name**: `OPENAI_API_KEY`、**Value**: あなたのAPIキー
+4. **Add secret** をクリック
+
 ### 手動実行
 
 #### コマンドライン
