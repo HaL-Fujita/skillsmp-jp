@@ -12,7 +12,6 @@
  */
 
 import OpenAI from 'openai';
-import translate from '@vitalets/google-translate-api';
 
 // 翻訳キャッシュ（同じテキストを何度も翻訳しないため）
 const translationCache = new Map<string, string>();
@@ -33,8 +32,13 @@ function getOpenAIClient(): OpenAI | null {
 
 /**
  * Google Translateを使ってテキストを日本語に翻訳
+ * Note: Currently disabled due to type issues. Use OpenAI instead.
  */
 async function translateWithGoogle(text: string, retries: number = 3): Promise<string> {
+  // Google Translate is currently disabled
+  throw new Error('Google Translate is disabled. Please use OpenAI API instead.');
+
+  /*
   if (!text || text.trim().length === 0) {
     return text;
   }
@@ -49,6 +53,7 @@ async function translateWithGoogle(text: string, retries: number = 3): Promise<s
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      // Google Translate implementation
       const result = await translate(text, { from: 'en', to: 'ja' });
       const translation = result.text;
 
@@ -71,6 +76,7 @@ async function translateWithGoogle(text: string, retries: number = 3): Promise<s
 
   console.error(`❌ Google Translate failed after ${retries + 1} attempts: ${lastError}`);
   return text; // エラー時は元のテキストを返す
+  */
 }
 
 /**
