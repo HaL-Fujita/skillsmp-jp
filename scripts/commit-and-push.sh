@@ -24,11 +24,27 @@ echo "📝 Changes detected! Preparing to commit..."
 SKILL_COUNT=$(jq length data/skills.json)
 echo "📊 Total skills: $SKILL_COUNT"
 
+# 差分の行数を取得（追加・削除行数）
+ADDED_LINES=$(git diff data/skills.json | grep -c "^+  " || true)
+REMOVED_LINES=$(git diff data/skills.json | grep -c "^-  " || true)
+
 # 現在の日時を取得（JST）
 TIMESTAMP=$(TZ=Asia/Tokyo date "+%Y-%m-%d %H:%M:%S JST")
 
-# コミットメッセージを作成
-COMMIT_MESSAGE="chore: update skills data ($SKILL_COUNT skills)
+# コミットメッセージを作成（差分情報を含む）
+if [ $ADDED_LINES -gt 0 ] || [ $REMOVED_LINES -gt 0 ]; then
+  COMMIT_MESSAGE="chore: update skills data ($SKILL_COUNT skills)
+
+Updated skills data from SkillsMP.com (incremental update)
+
+- Total skills: $SKILL_COUNT
+- Changed lines: +$ADDED_LINES / -$REMOVED_LINES
+- Updated at: $TIMESTAMP
+
+🤖 Generated with Claude Code
+"
+else
+  COMMIT_MESSAGE="chore: update skills data ($SKILL_COUNT skills)
 
 Updated skills data from SkillsMP.com
 
@@ -37,6 +53,7 @@ Updated skills data from SkillsMP.com
 
 🤖 Generated with Claude Code
 "
+fi
 
 # Gitの設定を確認
 if ! git config user.name > /dev/null 2>&1; then

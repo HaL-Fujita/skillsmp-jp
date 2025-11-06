@@ -13,15 +13,27 @@ const execAsync = promisify(exec);
  * セキュリティ: CRON_SECRET環境変数で認証
  */
 export async function GET(request: NextRequest) {
-  // Cron Secretで認証
+  // Cron Secretで認証（本番環境では必須）
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+  // 本番環境ではCRON_SECRETを必須にする
+  if (process.env.NODE_ENV === 'production') {
+    if (!cronSecret) {
+      console.error('❌ CRON_SECRET is not set in production');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      console.warn('⚠️  Unauthorized access attempt to /api/scrape');
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
   }
 
   try {

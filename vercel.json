@@ -2,7 +2,13 @@
   "crons": [
     {
       "path": "/api/scrape",
-      "schedule": "0 9 * * *"
+      "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "buildCommand": "npm run build",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
 }

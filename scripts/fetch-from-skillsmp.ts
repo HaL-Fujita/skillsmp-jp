@@ -246,6 +246,82 @@ function transformSkill(
 }
 
 /**
+ * 既存のスキルデータを読み込む
+ */
+function loadExistingSkills(): OutputSkill[] {
+  if (!fs.existsSync(OUTPUT_FILE)) {
+    console.log('📂 No existing data file found. Will create new one.');
+    return [];
+  }
+
+  try {
+    const content = fs.readFileSync(OUTPUT_FILE, 'utf-8');
+    const skills = JSON.parse(content) as OutputSkill[];
+    console.log(`📂 Loaded ${skills.length} existing skills from ${OUTPUT_FILE}`);
+    return skills;
+  } catch (error) {
+    console.warn('⚠️  Failed to load existing data. Starting fresh.');
+    return [];
+  }
+}
+
+/**
+ * スキルの差分を検出
+ */
+interface SkillDiff {
+  added: SkillsMPSkill[];      // 新規追加されたスキル
+  updated: SkillsMPSkill[];    // 更新されたスキル
+  removed: string[];           // 削除されたスキルのID
+  unchanged: OutputSkill[];    // 変更なしのスキル
+}
+
+function detectChanges(
+  existingSkills: OutputSkill[],
+  newSkills: SkillsMPSkill[]
+): SkillDiff {
+  const existingMap = new Map(existingSkills.map(s => [s.id, s]));
+  const newMap = new Map(newSkills.map(s => [s.id, s]));
+
+  const added: SkillsMPSkill[] = [];
+  const updated: SkillsMPSkill[] = [];
+  const unchanged: OutputSkill[] = [];
+  const removed: string[] = [];
+
+  // 新規追加と更新を検出
+  for (const newSkill of newSkills) {
+    const existing = existingMap.get(newSkill.id);
+
+    if (!existing) {
+      // 新規追加
+      added.push(newSkill);
+    } else {
+      // 更新チェック（updatedAt, stars, forksなどを比較）
+      const hasChanged =
+        existing.stars !== newSkill.stars ||
+        existing.forks !== newSkill.forks ||
+        existing.updatedAt !== formatDate(newSkill.updatedAt) ||
+        existing.nameEn !== newSkill.name ||
+        existing.descriptionEn !== newSkill.description;
+
+      if (hasChanged) {
+        updated.push(newSkill);
+      } else {
+        unchanged.push(existing);
+      }
+    }
+  }
+
+  // 削除されたスキルを検出
+  for (const existingId of existingMap.keys()) {
+    if (!newMap.has(existingId)) {
+      removed.push(existingId);
+    }
+  }
+
+  return { added, updated, removed, unchanged };
+}
+
+/**
  * データをJSONファイルに保存
  */
 function saveToFile(skills: OutputSkill[]): void {
@@ -304,7 +380,7 @@ function printStatistics(skills: OutputSkill[]): void {
  * メイン実行関数
  */
 async function main(): Promise<void> {
-  console.log('🚀 Starting SkillsMP.com scraper with translation...\n');
+  console.log('🚀 Starting SkillsMP.com scraper with incremental update...\n');
 
   // 翻訳機能の状態を表示
   if (isTranslationEnabled()) {
@@ -314,28 +390,52 @@ async function main(): Promise<void> {
   }
 
   try {
+    // 既存データを読み込む
+    const existingSkills = loadExistingSkills();
+
     // 全スキルを取得
     const rawSkills = await fetchAllSkills();
 
-    console.log(`\n🔄 Transforming ${rawSkills.length} skills...`);
+    // 差分を検出
+    console.log(`\n🔍 Detecting changes...`);
+    const diff = detectChanges(existingSkills, rawSkills);
 
-    let translatedNames: string[] = [];
-    let translatedDescriptions: string[] = [];
+    console.log(`\n📊 Change summary:`);
+    console.log(`  ✨ New: ${diff.added.length}`);
+    console.log(`  🔄 Updated: ${diff.updated.length}`);
+    console.log(`  ❌ Removed: ${diff.removed.length}`);
+    console.log(`  ✅ Unchanged: ${diff.unchanged.length}`);
+
+    // 変更がない場合は終了
+    if (diff.added.length === 0 && diff.updated.length === 0 && diff.removed.length === 0) {
+      console.log(`\n✅ No changes detected. Skipping translation and save.`);
+      return;
+    }
+
+    // 新規・更新されたスキルのみを翻訳
+    const skillsToTranslate = [...diff.added, ...diff.updated];
+    let translatedNames: Map<string, string> = new Map();
+    let translatedDescriptions: Map<string, string> = new Map();
 
     // 翻訳が有効な場合、並列で一括翻訳
-    if (isTranslationEnabled()) {
-      console.log(`\n🌐 Starting parallel translation (this will take ~15-20 minutes)...`);
+    if (isTranslationEnabled() && skillsToTranslate.length > 0) {
+      // 翻訳エンジンに応じて並列数と時間を調整
+      const isGoogleTranslate = process.env.USE_GOOGLE_TRANSLATE === 'true';
+      const concurrency = isGoogleTranslate ? 10 : 3;
+      const engineName = isGoogleTranslate ? 'Google Translate' : 'OpenAI';
+
+      console.log(`\n🌐 Translating ${skillsToTranslate.length} changed skills with ${engineName}...`);
       const startTime = Date.now();
 
-      // すべてのスキル名を抽出
-      const allNames = rawSkills.map(s => s.name);
-      console.log(`\n📝 Translating ${allNames.length} skill names...`);
+      // 新規・更新されたスキル名を抽出
+      const namesToTranslate = skillsToTranslate.map(s => s.name);
+      console.log(`\n📝 Translating ${namesToTranslate.length} skill names...`);
 
-      translatedNames = await batchTranslateParallel(
-        allNames,
-        3, // 同時に3件翻訳（レート制限対策）
+      const translatedNamesList = await batchTranslateParallel(
+        namesToTranslate,
+        concurrency,
         (completed, total) => {
-          if (completed % 50 === 0 || completed === total) {
+          if (completed % 10 === 0 || completed === total) {
             const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
             const percent = ((completed / total) * 100).toFixed(1);
             console.log(`  ⏱️  Names: ${completed}/${total} (${percent}%) - ${elapsed}min elapsed`);
@@ -343,21 +443,31 @@ async function main(): Promise<void> {
         }
       );
 
-      // すべてのスキル説明を抽出
-      const allDescriptions = rawSkills.map(s => s.description);
-      console.log(`\n📄 Translating ${allDescriptions.length} descriptions...`);
+      // 結果をMapに格納
+      skillsToTranslate.forEach((skill, index) => {
+        translatedNames.set(skill.id, translatedNamesList[index]);
+      });
 
-      translatedDescriptions = await batchTranslateParallel(
-        allDescriptions,
-        3, // 同時に3件翻訳（レート制限対策）
+      // 新規・更新されたスキル説明を抽出
+      const descriptionsToTranslate = skillsToTranslate.map(s => s.description);
+      console.log(`\n📄 Translating ${descriptionsToTranslate.length} descriptions...`);
+
+      const translatedDescriptionsList = await batchTranslateParallel(
+        descriptionsToTranslate,
+        concurrency,
         (completed, total) => {
-          if (completed % 50 === 0 || completed === total) {
+          if (completed % 10 === 0 || completed === total) {
             const elapsed = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
             const percent = ((completed / total) * 100).toFixed(1);
             console.log(`  ⏱️  Descriptions: ${completed}/${total} (${percent}%) - ${elapsed}min elapsed`);
           }
         }
       );
+
+      // 結果をMapに格納
+      skillsToTranslate.forEach((skill, index) => {
+        translatedDescriptions.set(skill.id, translatedDescriptionsList[index]);
+      });
 
       const totalTime = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
       console.log(`\n✅ Translation completed in ${totalTime} minutes!`);
@@ -367,23 +477,32 @@ async function main(): Promise<void> {
       console.log(`📊 Translation stats: ${stats.cacheSize} unique texts cached`);
     }
 
-    // データ変換（翻訳結果を適用）
+    // データ変換（新規・更新分）
     console.log(`\n🔄 Building skill objects...`);
-    const transformedSkills: OutputSkill[] = rawSkills.map((skill, index) => {
+    const newTransformedSkills: OutputSkill[] = skillsToTranslate.map(skill => {
       return transformSkill(
         skill,
-        translatedNames[index],
-        translatedDescriptions[index]
+        translatedNames.get(skill.id),
+        translatedDescriptions.get(skill.id)
       );
     });
 
+    // 既存の翻訳済みデータと新規・更新データをマージ
+    const finalSkills: OutputSkill[] = [
+      ...diff.unchanged,
+      ...newTransformedSkills
+    ];
+
+    // IDでソート（一貫性のため）
+    finalSkills.sort((a, b) => a.id.localeCompare(b.id));
+
     // ファイルに保存
-    saveToFile(transformedSkills);
+    saveToFile(finalSkills);
 
     // 統計情報を表示
-    printStatistics(transformedSkills);
+    printStatistics(finalSkills);
 
-    console.log('\n✨ Scraping completed successfully!');
+    console.log('\n✨ Incremental update completed successfully!');
   } catch (error) {
     console.error('\n❌ Error occurred:', error);
     process.exit(1);

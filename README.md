@@ -249,11 +249,15 @@ fs.writeFileSync('data/skills.json', JSON.stringify(transformedSkills, null, 2))
 
 ## 🚢 デプロイ
 
-### Vercelにデプロイ
+### Vercelにデプロイ（推奨）
+
+**完全な手順は [DEPLOYMENT.md](./DEPLOYMENT.md) を参照してください。**
+
+#### クイックデプロイ
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
 
-または手動でデプロイ：
+#### 手動デプロイ
 
 ```bash
 # Vercel CLIをインストール
@@ -265,11 +269,14 @@ vercel
 
 ### 環境変数
 
+デプロイ時に以下の環境変数を設定してください：
+
 | 変数名 | 必須 | 説明 |
 |--------|------|------|
-| `OPENAI_API_KEY` | オプション | OpenAI APIキー。スキルデータを日本語に翻訳する場合に必要です。[取得方法](https://platform.openai.com/api-keys) |
+| `OPENAI_API_KEY` | ✅ | OpenAI APIキー。スキルデータを日本語に翻訳するために必要。[取得方法](https://platform.openai.com/api-keys) |
+| `CRON_SECRET` | ✅（本番のみ） | Vercel Cron Jobs認証用のランダムな文字列。`openssl rand -base64 32` で生成 |
 
-**使用例:**
+**ローカル開発用:**
 
 ```bash
 # .envファイルを作成
@@ -281,6 +288,29 @@ echo "OPENAI_API_KEY=sk-your-api-key-here" > .env
 # スクレイピング実行（.envから自動読み込み）
 npm run scrape
 ```
+
+### 自動更新の設定
+
+#### オプション1: GitHub Actions（推奨）
+
+データを永続化して自動更新するには、GitHub Actionsを使用します：
+
+1. GitHubリポジトリの **Settings** → **Secrets and variables** → **Actions**
+2. `OPENAI_API_KEY` を追加
+3. 毎日0時UTC（日本時間9時）に自動実行されます
+
+ワークフローファイルは既に含まれています: `.github/workflows/update-skills.yml`
+
+#### オプション2: Vercel Cron Jobs
+
+Vercelの設定:
+
+1. Vercelプロジェクトの **Settings** → **Environment Variables** で `OPENAI_API_KEY` と `CRON_SECRET` を設定
+2. **Settings** → **Cron Jobs** で自動検出されたCron Jobを有効化
+
+**注意**: Vercel Cronではファイルシステムへの書き込みが永続化されないため、GitHub Actionsの使用を推奨します。
+
+詳細は [DEPLOYMENT.md](./DEPLOYMENT.md) を参照してください。
 
 ## 🤝 コントリビューション
 

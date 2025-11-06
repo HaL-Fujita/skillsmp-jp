@@ -1,14 +1,18 @@
 /**
- * Translation utility using OpenAI API
+ * Translation utility using OpenAI API or Google Translate
  *
  * Performance:
- * - Parallel translation: 3 concurrent requests (rate limit safe)
- * - Estimated time: 15-20 minutes for ~4,500 texts
- * - Rate limit: OpenAI allows 500 req/min (Tier 1)
+ * - OpenAI: 3 concurrent requests, 15-20 minutes for ~4,500 texts (rate limit safe)
+ * - Google Translate: 10 concurrent requests, 5-10 minutes (free, no API key needed)
  * - Retry logic: Exponential backoff for rate limit errors
+ *
+ * Usage:
+ * - Set OPENAI_API_KEY to use OpenAI (higher quality, daily limit 10,000)
+ * - Set USE_GOOGLE_TRANSLATE=true to use Google Translate (free, unlimited)
  */
 
 import OpenAI from 'openai';
+import translate from '@vitalets/google-translate-api';
 
 // 翻訳キャッシュ（同じテキストを何度も翻訳しないため）
 const translationCache = new Map<string, string>();
@@ -28,9 +32,51 @@ function getOpenAIClient(): OpenAI | null {
 }
 
 /**
+ * Google Translateを使ってテキストを日本語に翻訳
+ */
+async function translateWithGoogle(text: string, retries: number = 3): Promise<string> {
+  if (!text || text.trim().length === 0) {
+    return text;
+  }
+
+  // キャッシュチェック
+  const cacheKey = text.toLowerCase();
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey)!;
+  }
+
+  let lastError: any;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await translate(text, { from: 'en', to: 'ja' });
+      const translation = result.text;
+
+      // キャッシュに保存
+      translationCache.set(cacheKey, translation);
+
+      return translation;
+    } catch (error: any) {
+      lastError = error;
+
+      // リトライ
+      if (attempt < retries) {
+        const waitTime = Math.pow(2, attempt) * 500; // 500ms, 1s, 2s...
+        console.warn(`⚠️  Google Translate error, retrying in ${waitTime}ms (attempt ${attempt + 1}/${retries + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+    }
+  }
+
+  console.error(`❌ Google Translate failed after ${retries + 1} attempts: ${lastError}`);
+  return text; // エラー時は元のテキストを返す
+}
+
+/**
  * OpenAI APIを使ってテキストを日本語に翻訳（リトライロジック付き）
  */
-export async function translateWithOpenAI(text: string, retries: number = 3): Promise<string> {
+async function translateWithOpenAIAPI(text: string, retries: number = 3): Promise<string> {
   if (!text || text.trim().length === 0) {
     return text;
   }
@@ -92,6 +138,25 @@ export async function translateWithOpenAI(text: string, retries: number = 3): Pr
 
   console.error(`❌ Translation failed after ${retries + 1} attempts: ${lastError}`);
   return text; // エラー時は元のテキストを返す
+}
+
+/**
+ * 適切な翻訳エンジンを選択して翻訳
+ */
+export async function translateWithOpenAI(text: string): Promise<string> {
+  // USE_GOOGLE_TRANSLATE が設定されている場合は Google Translate を使用
+  if (process.env.USE_GOOGLE_TRANSLATE === 'true') {
+    return translateWithGoogle(text);
+  }
+
+  // OpenAI API が設定されている場合は OpenAI を使用
+  if (process.env.OPENAI_API_KEY) {
+    return translateWithOpenAIAPI(text);
+  }
+
+  // どちらも設定されていない場合は元のテキストを返す
+  console.warn('⚠️  No translation service configured. Skipping translation.');
+  return text;
 }
 
 /**
@@ -177,7 +242,7 @@ export async function batchTranslateParallel(
  * 翻訳が有効かチェック
  */
 export function isTranslationEnabled(): boolean {
-  return !!process.env.OPENAI_API_KEY;
+  return !!process.env.OPENAI_API_KEY || process.env.USE_GOOGLE_TRANSLATE === 'true';
 }
 
 /**

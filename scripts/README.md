@@ -1,90 +1,64 @@
 # データ収集スクリプト
 
-GitHub APIを使ってClaudeスキルのデータを自動収集し、自動翻訳するスクリプトです。
+SkillsMP.com APIを使ってClaudeスキルのデータを自動収集し、自動翻訳するスクリプトです。
 
 ## 機能
 
-- ✅ GitHub APIから最新のスキルデータを取得
-- ✅ 自動翻訳（googletrans または OpenAI API）
+- ✅ SkillsMP.com APIから最新のスキルデータを取得
+- ✅ **差分更新**: 変更されたスキルのみを翻訳・更新（高速化 & コスト削減）
+- ✅ 自動翻訳（OpenAI API）
 - ✅ 日本語と英語の両方を保存
+- ✅ 自動Git commit & push
 
 ## 使い方
 
-### 1. 基本的な実行（自動翻訳あり - googletrans）
+### 1. 基本的な実行（差分更新 + OpenAI翻訳）
 
 ```bash
 cd /mnt/c/Users/bestg/codes/skillsmp-jp
 
-# googletransライブラリをインストール（初回のみ）
-pip3 install googletrans==4.0.0-rc1
+# .envファイルにOpenAI APIキーを設定（初回のみ）
+echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
 
-# スクリプトを実行
-python3 scripts/fetch_skills.py
+# スクリプトを実行（差分のみを更新）
+npm run scrape
 ```
 
-デフォルトで `googletrans` を使って自動翻訳されます。
+**差分更新の動作:**
+- 既存の `data/skills.json` を読み込み
+- SkillsMP.com APIから最新データを取得
+- 変更されたスキルのみを翻訳（新規追加 + 更新分）
+- 変更がない場合は翻訳をスキップ
 
-**注意**:
-- GitHub Tokenなしの場合、APIのレート制限（60リクエスト/時）があります
-- googletransは無料ですが、時々不安定になることがあります
-
-### 2. OpenAI APIを使った高品質翻訳
-
-より高品質な翻訳が必要な場合は、OpenAI APIを使用できます。
+### 2. データ更新 + Git自動commit & push
 
 ```bash
-# 環境変数を設定
-export TRANSLATION_METHOD=openai
-export OPENAI_API_KEY=your_openai_api_key_here
-
-# スクリプトを実行
-python3 scripts/fetch_skills.py
+# スクレイピング → コミット → プッシュを一括実行
+npm run scrape:push
 ```
 
-### 3. 翻訳なしで実行
+これにより以下が自動実行されます:
+1. 差分更新スクリプトを実行
+2. 変更があれば自動でGitにコミット
+3. GitHubにプッシュ
 
-翻訳せずに英語のままデータを取得する場合:
-
-```bash
-TRANSLATION_METHOD=none python3 scripts/fetch_skills.py
-```
-
-### 4. GitHub Tokenを使った実行（推奨）
-
-レート制限を緩和するため、GitHub Personal Access Tokenを使用できます。
-
-#### GitHub Tokenの作成方法
-
-1. GitHub にログイン
-2. Settings → Developer settings → Personal access tokens → Tokens (classic)
-3. "Generate new token (classic)" をクリック
-4. スコープ: `public_repo` を選択
-5. Tokenをコピー
-
-#### 実行方法
+### 3. 手動でコミット・プッシュのみ
 
 ```bash
-# 環境変数でTokenを設定
-export GITHUB_TOKEN=your_github_token_here
-
-# スクリプトを実行
-cd /mnt/c/Users/bestg/codes/skillsmp-jp
-python3 scripts/fetch_skills.py
-```
-
-または、すべての環境変数を一度に設定:
-
-```bash
-GITHUB_TOKEN=your_token TRANSLATION_METHOD=googletrans python3 scripts/fetch_skills.py
+# スクレイピング済みのデータをコミット・プッシュ
+npm run push
 ```
 
 ## 環境変数
 
 | 変数名 | 説明 | デフォルト値 | 必須 |
 |--------|------|-------------|------|
-| `GITHUB_TOKEN` | GitHub Personal Access Token | なし | ❌ |
-| `TRANSLATION_METHOD` | 翻訳方法 (googletrans/openai/none) | googletrans | ❌ |
-| `OPENAI_API_KEY` | OpenAI APIキー | なし | ❌ (openai使用時のみ) |
+| `OPENAI_API_KEY` | OpenAI APIキー（翻訳に使用） | なし | ✅ |
+
+`.env`ファイルに設定することを推奨:
+```bash
+OPENAI_API_KEY=sk-proj-xxxxx
+```
 
 ## 出力
 
@@ -110,56 +84,57 @@ GITHUB_TOKEN=your_token TRANSLATION_METHOD=googletrans python3 scripts/fetch_ski
 }
 ```
 
-## スクリプトの動作
+## スクリプトの動作（差分更新）
 
-1. GitHub APIで `anthropics/skills` リポジトリにアクセス
-2. 各スキルディレクトリから `SKILL.md` ファイルを取得
-3. YAMLフロントマターから名前、説明、カテゴリ、タグを抽出
-4. **自動翻訳**: 名前と説明を日本語に翻訳（googletrans または OpenAI API）
-5. リポジトリのメタデータ（Stars数、更新日など）を収集
-6. 日本語と英語の両方のデータを `data/skills.json` に保存
+1. **既存データの読み込み**: `data/skills.json` から現在のデータを読み込む
+2. **最新データの取得**: SkillsMP.com APIから全スキルを取得
+3. **差分検出**:
+   - 新規追加されたスキル
+   - 更新されたスキル（stars, forks, updatedAt等の変更を検出）
+   - 削除されたスキル
+   - 変更なしのスキル
+4. **効率的な翻訳**: 新規・更新されたスキルのみを翻訳（OpenAI API）
+5. **データマージ**: 既存の翻訳済みデータと新規翻訳データを統合
+6. **保存**: `data/skills.json` に保存
+
+### 差分更新のメリット
+
+- ⚡ **高速化**: 変更がない場合は翻訳をスキップ
+- 💰 **コスト削減**: 新規・更新分のみ翻訳するため、OpenAI APIコストを大幅削減
+- 🔄 **信頼性**: 既存の翻訳は保持され、新規分のみ更新
 
 ## トラブルシューティング
 
-### "Rate limit exceeded" エラー
+### OpenAI APIエラー
 
-GitHub Tokenを設定してください（上記参照）。
+- `OPENAI_API_KEY` が `.env` ファイルに正しく設定されているか確認
+- APIキーの残高を確認
+- APIのレート制限に注意
 
-### "googletrans not installed" エラー
+### "No changes detected" が表示される
 
-googletransライブラリをインストールしてください:
+これは正常な動作です。変更がない場合は翻訳をスキップして処理を終了します。
 
-```bash
-pip3 install googletrans==4.0.0-rc1
-```
+### Git push が失敗する
 
-### 翻訳が失敗する場合
-
-1. **googletransが不安定な場合**:
-   - OpenAI APIを使用してください（より安定）
-   - または `TRANSLATION_METHOD=none` で翻訳なしで実行
-
-2. **OpenAI APIエラーの場合**:
-   - `OPENAI_API_KEY` が正しく設定されているか確認
-   - APIキーの残高を確認
-   - `TRANSLATION_METHOD=googletrans` に切り替え
-
-### "No repositories found" エラー
-
-- インターネット接続を確認
-- GitHub APIのステータスを確認: https://www.githubstatus.com/
+- リモートリポジトリへのアクセス権限を確認
+- ブランチが正しいか確認
+- `git remote -v` でリモートURLを確認
 
 ### その他のエラー
 
-エラーメッセージとURLを確認して、GitHub APIのドキュメントを参照してください:
-https://docs.github.com/en/rest
+エラーメッセージを確認して、SkillsMP.com APIのステータスを確認してください:
+https://skillsmp.com/api/skills
 
 ## 依存関係
 
 ### 必須
-- Python 3.7+
-- urllib (標準ライブラリ)
+- Node.js 20+
+- npm
+- OpenAI APIキー
 
-### オプション
-- `googletrans==4.0.0-rc1` (googletrans翻訳を使用する場合)
-- OpenAI APIキー (OpenAI翻訳を使用する場合)
+### パッケージ
+- `next` - Next.jsフレームワーク
+- `openai` - OpenAI API クライアント
+- `tsx` - TypeScript実行環境
+- `dotenv` - 環境変数管理
